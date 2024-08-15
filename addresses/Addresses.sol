@@ -51,27 +51,34 @@ contract Addresses is IAddresses, Test {
     /// @notice array of addresses deployed during a proposal
     RecordedAddress[] private recordedAddresses;
 
-    // @notice array of addresses changed during a proposal
+    /// @notice array of addresses changed during a proposal
     ChangedAddress[] private changedAddresses;
 
-    constructor(string memory addressesPath) {
+    /// @notice array of all address details
+    SavedAddresses[] private savedAddresses;
+
+    /// @notice path of addresses file
+    string private addressesPath;
+
+    constructor(string memory _addressesPath) {
+        addressesPath = _addressesPath;
         string memory addressesData = string(
             abi.encodePacked(vm.readFile(addressesPath))
         );
 
         bytes memory parsedJson = vm.parseJson(addressesData);
 
-        SavedAddresses[] memory savedAddresses = abi.decode(
+        SavedAddresses[] memory fileAddresses = abi.decode(
             parsedJson,
             (SavedAddresses[])
         );
 
-        for (uint256 i = 0; i < savedAddresses.length; i++) {
+        for (uint256 i = 0; i < fileAddresses.length; i++) {
             _addAddress(
-                savedAddresses[i].name,
-                savedAddresses[i].addr,
-                savedAddresses[i].chainId,
-                savedAddresses[i].isContract
+                fileAddresses[i].name,
+                fileAddresses[i].addr,
+                fileAddresses[i].chainId,
+                fileAddresses[i].isContract
             );
         }
     }
@@ -177,6 +184,16 @@ contract Addresses is IAddresses, Test {
                 oldAddress: data.addr
             })
         );
+
+        for (uint256 i; i < savedAddresses.length; i++) {
+            if (
+                keccak256(abi.encode(savedAddresses[i].name)) ==
+                keccak256(abi.encode(name)) &&
+                savedAddresses[i].chainId == chainId
+            ) {
+                savedAddresses[i].addr = _addr;
+            }
+        }
 
         data.addr = _addr;
         data.isContract = isContract;
@@ -327,6 +344,12 @@ contract Addresses is IAddresses, Test {
         }
     }
 
+    /// @dev Update Address json
+    function updateJson() external {
+        string memory json = _constructJson();
+        vm.writeJson(json, addressesPath);
+    }
+
     /// @notice add an address for a specific chainId
     /// @param name the name of the address
     /// @param addr the address to add
@@ -363,7 +386,7 @@ contract Addresses is IAddresses, Test {
             string(
                 abi.encodePacked(
                     "Address: ",
-                    addressToString(addr),
+                    vm.toString(addr),
                     " already set on chain: ",
                     vm.toString(chainId)
                 )
@@ -376,6 +399,15 @@ contract Addresses is IAddresses, Test {
 
         currentAddress.addr = addr;
         currentAddress.isContract = isContract;
+
+        savedAddresses.push(
+            SavedAddresses({
+                name: name,
+                addr: addr,
+                chainId: chainId,
+                isContract: isContract
+            })
+        );
 
         vm.label(addr, name);
     }
@@ -445,16 +477,37 @@ contract Addresses is IAddresses, Test {
         }
     }
 
-    function addressToString(
-        address _addr
-    ) internal pure returns (string memory) {
-        bytes memory alphabet = "0123456789abcdef";
-        bytes20 value = bytes20(_addr);
-        bytes memory str = new bytes(40); // An Ethereum address has 20 bytes, hence 40 characters in hex
-        for (uint256 i = 0; i < 20; i++) {
-            str[i * 2] = alphabet[uint8(value[i] >> 4)];
-            str[1 + i * 2] = alphabet[uint8(value[i] & 0x0f)];
+    /// @notice constructs json string data for address json from saved addresses array
+    function _constructJson() private view returns (string memory) {
+        string memory json = "[";
+
+        for (uint256 i = 0; i < savedAddresses.length; i++) {
+            json = string(
+                abi.encodePacked(
+                    json,
+                    "{",
+                    '"addr": "',
+                    vm.toString(savedAddresses[i].addr),
+                    '",',
+                    '"name": "',
+                    savedAddresses[i].name,
+                    '",',
+                    '"chainId": ',
+                    vm.toString(savedAddresses[i].chainId),
+                    ",",
+                    '"isContract": ',
+                    savedAddresses[i].isContract ? "true" : "false",
+                    "}"
+                )
+            );
+
+            if (i < savedAddresses.length - 1) {
+                json = string(abi.encodePacked(json, ","));
+            }
         }
-        return string(abi.encodePacked("0x", str));
+
+        json = string(abi.encodePacked(json, "]"));
+
+        return json;
     }
 }
