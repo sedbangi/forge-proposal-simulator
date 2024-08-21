@@ -69,26 +69,29 @@ interface IGovernor {
      * snapshot is performed at the end of this block. Hence, voting for this proposal starts at the beginning of the
      * following block.
      */
-    function proposalSnapshot(
-        uint256 proposalId
-    ) external view returns (uint256);
+    function proposalSnapshot(uint256 proposalId)
+        external
+        view
+        returns (uint256);
 
     /**
      * @notice module:core
      * @dev Timepoint at which votes close. If using block number, votes close at the end of this block, so it is
      * possible to cast a vote during this block.
      */
-    function proposalDeadline(
-        uint256 proposalId
-    ) external view returns (uint256);
+    function proposalDeadline(uint256 proposalId)
+        external
+        view
+        returns (uint256);
 
     /**
      * @notice module:core
      * @dev The account that created a proposal.
      */
-    function proposalProposer(
-        uint256 proposalId
-    ) external view returns (address);
+    function proposalProposer(uint256 proposalId)
+        external
+        view
+        returns (address);
 
     /**
      * @notice module:core
@@ -102,9 +105,10 @@ interface IGovernor {
      * @notice module:core
      * @dev Whether a proposal needs to be queued before execution.
      */
-    function proposalNeedsQueuing(
-        uint256 proposalId
-    ) external view returns (bool);
+    function proposalNeedsQueuing(uint256 proposalId)
+        external
+        view
+        returns (bool);
 
     /**
      * @notice module:user-config
@@ -149,10 +153,10 @@ interface IGovernor {
      * Note: this can be implemented in a number of ways, for example by reading the delegated balance from one (or
      * multiple), {ERC20Votes} tokens.
      */
-    function getVotes(
-        address account,
-        uint256 timepoint
-    ) external view returns (uint256);
+    function getVotes(address account, uint256 timepoint)
+        external
+        view
+        returns (uint256);
 
     /**
      * @notice module:reputation
@@ -168,10 +172,10 @@ interface IGovernor {
      * @notice module:voting
      * @dev Returns whether `account` has cast a vote on `proposalId`.
      */
-    function hasVoted(
-        uint256 proposalId,
-        address account
-    ) external view returns (bool);
+    function hasVoted(uint256 proposalId, address account)
+        external
+        view
+        returns (bool);
 
     /**
      * @dev Create a new proposal. Vote start after a delay specified by {IGovernor-votingDelay} and lasts for a
@@ -240,10 +244,9 @@ interface IGovernor {
      *
      * Emits a {VoteCast} event.
      */
-    function castVote(
-        uint256 proposalId,
-        uint8 support
-    ) external returns (uint256 balance);
+    function castVote(uint256 proposalId, uint8 support)
+        external
+        returns (uint256 balance);
 
     /**
      * @dev Cast a vote with a reason
